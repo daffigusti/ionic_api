@@ -13,6 +13,11 @@ import {SplashScreen} from '@ionic-native/splash-screen';
 import {LoginPage} from "../pages/login-page/login-page";
 import {AuthService} from "../providers/auth-service";
 
+import { File } from '@ionic-native/file';
+import { Transfer } from '@ionic-native/transfer';
+import { FilePath } from '@ionic-native/file-path';
+import { Camera } from '@ionic-native/camera';
+
 @NgModule({
     declarations: [
         MyApp,
@@ -39,6 +44,10 @@ import {AuthService} from "../providers/auth-service";
     providers: [
         StatusBar,
         SplashScreen,
+        File,
+        Transfer,
+        Camera,
+        FilePath,
         {provide: ErrorHandler, useClass: IonicErrorHandler},
         AuthService
     ]

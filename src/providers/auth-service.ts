@@ -4,6 +4,7 @@ import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/observable/throw';
+import {Platform} from "ionic-angular";
 
 /*
  Generated class for the AuthService provider.
@@ -15,10 +16,15 @@ import 'rxjs/add/observable/throw';
 export class AuthService {
     APIUrl = 'http://localhost:81/web_service/public/api';
 
-    constructor(public http: Http) {
+    constructor(public http: Http,public platform: Platform) {
         console.log('Hello AuthService Provider');
 
         this.APIUrl = 'http://localhost:8101/api';
+        if (this.platform.is('mobileweb') == true){
+            this.APIUrl = 'http://localhost:8101/api';
+        }else{
+            this.APIUrl = 'http://localhost:81/web_service/public/api';
+        }
     }
 
     public login(credentials) {
