@@ -1,0 +1,12 @@
+{
+  "name": "ionic_api",
+  "app_id": "",
+  "v2": true,
+  "typescript": true,
+  "proxies": [
+    {
+      "path": "/api",
+      "proxyUrl": "http://localhost:81/web_service/public/api"
+    }
+  ]
+}
