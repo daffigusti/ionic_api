@@ -13,6 +13,9 @@ import {File} from '@ionic-native/file';
 import {Transfer, TransferObject} from '@ionic-native/transfer';
 import {FilePath} from '@ionic-native/file-path';
 import {Camera} from '@ionic-native/camera';
+import {NativeStorage} from "@ionic-native/native-storage";
+import {Network} from "@ionic-native/network";
+import {SQLite, SQLiteObject} from '@ionic-native/sqlite';
 
 declare var cordova: any;
 
@@ -24,8 +27,44 @@ export class HomePage {
 
     lastImage: string = null;
     loading: Loading;
+    data: any;
+    db: any;
+    public database: SQLiteObject;
+    people = {firstname : '',lastname:'',image:''};
 
-    constructor(public navCtrl: NavController, private camera: Camera, private transfer: Transfer, private file: File, private filePath: FilePath, public actionSheetCtrl: ActionSheetController, public toastCtrl: ToastController, public platform: Platform, public loadingCtrl: LoadingController) {
+    constructor(public navCtrl: NavController,
+                private camera: Camera,
+                private transfer: Transfer,
+                private file: File,
+                private filePath: FilePath,
+                public actionSheetCtrl: ActionSheetController,
+                public toastCtrl: ToastController,
+                public platform: Platform,
+                public loadingCtrl: LoadingController,
+                private nativeStorage: NativeStorage,
+                private network: Network,
+                private sqlite: SQLite,
+    ) {
+        this.sqlite.create({
+            name: 'data.db',
+            location: 'default'
+        })
+            .then((db: SQLiteObject) => {
+                this.database = db;
+            })
+            .catch(e => console.log(e));
+    }
+
+    ionViewDidLoad() {
+
+    }
+
+    public add(firstname,lastname,image) {
+        this.database.executeSql("INSERT INTO people (firstname, lastname, image) VALUES (firstname,lastname,image)", []).then((data) => {
+            console.log("INSERTED: " + JSON.stringify(data));
+        }, (error) => {
+            console.log("ERROR: " + JSON.stringify(error.err));
+        });
     }
 
     public presentActionSheet() {
@@ -94,6 +133,10 @@ export class HomePage {
     private copyFileToLocalDir(namePath, currentName, newFileName) {
         this.file.copyFile(namePath, currentName, cordova.file.dataDirectory, newFileName).then(success => {
             this.lastImage = newFileName;
+
+
+            var dat_i = {image: this.lastImage, text: 'halo', is_upload: false};
+            this.data.push(dat_i)
         }, error => {
             this.presentToast('Error while storing file.');
         });
@@ -132,7 +175,7 @@ export class HomePage {
             fileName: filename,
             chunkedMode: false,
             mimeType: "multipart/form-data",
-            params : {'fileName': filename}
+            params: {'fileName': filename}
         };
 
         const fileTransfer: TransferObject = this.transfer.create();
@@ -146,10 +189,29 @@ export class HomePage {
         fileTransfer.upload(targetPath, url, options).then(data => {
             this.loading.dismissAll()
             this.presentToast('Image succesful uploaded.');
+
+            this.nativeStorage.setItem("IS_UPLOAD", false);
+
         }, err => {
             this.loading.dismissAll()
             this.presentToast('Error while uploading file.');
         });
     }
+
+    public try_upload() {
+        // watch network for a connection
+        let connectSubscription = this.network.onConnect().subscribe(() => {
+            console.log('network connected!');
+            // We just got a connection but we need to wait briefly
+            // before we determine the connection type.  Might need to wait 
+            // prior to doing any api requests as well.
+            setTimeout(() => {
+                if (this.network.type === 'wifi') {
+                    console.log('we got a wifi connection, woohoo!');
+                }
+            }, 3000);
+        });
+    }
+
 
 }
