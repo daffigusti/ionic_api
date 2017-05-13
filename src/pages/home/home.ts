@@ -55,6 +55,7 @@ export class HomePage {
         })
             .then((db: SQLiteObject) => {
                 this.database = db;
+                console.log("Database loaded in homepage.");
 
                 this.retrieve();
             })
@@ -96,7 +97,7 @@ export class HomePage {
         this.database.transaction(function (tx) {
             tx.executeSql('DELETE FROM people', [], function (tx, rs) {
                 console.log('Data is deleted ');
-                page.retrieve();
+                page.row_data = [];
             }, function (tx, error) {
                 console.log('SELECT error: ' + error.message);
             });
@@ -109,6 +110,7 @@ export class HomePage {
             tx.executeSql('SELECT * FROM people', [], function (tx, rs) {
                 //console.log('Record count ' + rs.rows.item(0).firstname);
                 console.log("Data: " + JSON.stringify(rs.rows.item));
+                page.row_data = [];
                 for (var x = 0; x < rs.rows.length; x++) {
                     page.row_data.push(
                         {
