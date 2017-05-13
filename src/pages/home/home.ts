@@ -37,6 +37,7 @@ export class HomePage {
     public row_data: any;
     isOnline = false;
     networkType = "";
+    interval: any;
 
     constructor(public navCtrl: NavController,
                 private camera: Camera,
@@ -66,17 +67,6 @@ export class HomePage {
             })
             .catch(e => console.log(e));
 
-
-        var page = this;
-        setInterval(function () {
-            var networkState = network.type;
-            page.networkType = networkState;
-            if (networkState !== Connection.NONE) {
-                page.isOnline = true;
-            } else {
-                page.isOnline = false;
-            }
-        }, 1000)
 
     }
 
@@ -141,6 +131,41 @@ export class HomePage {
                 }
             }, function (tx, error) {
                 console.log('SELECT error: ' + error.message);
+            });
+        });
+    }
+
+    public upload() {
+        var page = this;
+        this.database.transaction(function (tx) {
+            tx.executeSql('SELECT * FROM people', [], function (tx, rs) {
+                //console.log('Record count ' + rs.rows.item(0).firstname);
+                console.log("Data: " + JSON.stringify(rs.rows.item));
+
+                if (rs.rows.length>0) {
+                    page.loading = page.loadingCtrl.create({
+                        content: 'Uploading...',
+                    });
+                    page.loading.present();
+                }
+                for (var x = 0; x < rs.rows.length; x++) {
+                    //page.lastImage = rs.rows.item(x).image;
+                    // page.people.firstname = rs.rows.item(x).firstname;
+                    // page.people.lastname = rs.rows.item(x).lastname;
+
+                    page.uploadImage(rs.rows.item(x).id,rs.rows.item(x).firstname, rs.rows.item(x).lastname, rs.rows.item(x).image);
+
+                }
+                page.loading.dismissAll();
+                page.loading.dismissAll();
+                console.log("Dismiss");
+                page.presentToast('Image succesful uploaded.');
+                clearInterval(page.interval);
+            }, function (tx, error) {
+                console.log('SELECT error: ' + error.message);
+                this.loading.dismissAll();
+                this.presentToast('Get data error...');
+
             });
         });
     }
@@ -239,57 +264,72 @@ export class HomePage {
         }
     }
 
-    public uploadImage() {
+    public uploadImage(id,firstname,lastname,image) {
         // Destination URL
-        var url = "http://192.168.1.6:81/web_service/public/api/upload_image";
+        var url = "http://192.168.1.8:81/web_service/public/api/upload_image";
 
         // File for Upload
-        var targetPath = this.pathForImage(this.lastImage);
+        var targetPath = this.pathForImage(image);
 
         // File name only
-        var filename = this.lastImage;
+        var filename =image;
 
         var options = {
             fileKey: "file",
             fileName: filename,
             chunkedMode: false,
             mimeType: "multipart/form-data",
-            params: {'fileName': filename}
+            params: {
+                'fileName': filename,
+                'firstname': firstname,
+                'lastname': lastname,
+            }
         };
 
         const fileTransfer: TransferObject = this.transfer.create();
 
-        this.loading = this.loadingCtrl.create({
-            content: 'Uploading...',
-        });
-        this.loading.present();
 
         // Use the FileTransfer to upload the image
         fileTransfer.upload(targetPath, url, options).then(data => {
-            this.loading.dismissAll()
-            this.presentToast('Image succesful uploaded.');
-
-            this.nativeStorage.setItem("IS_UPLOAD", false);
+            this.loading.dismissAll();
+            //this.nativeStorage.setItem("IS_UPLOAD", false);
+            this.delete_by_id(id);
 
         }, err => {
-            this.loading.dismissAll()
+
             this.presentToast('Error while uploading file.');
         });
     }
 
-    public try_upload() {
-        // watch network for a connection
-        let connectSubscription = this.network.onConnect().subscribe(() => {
-            console.log('network connected!');
-            // We just got a connection but we need to wait briefly
-            // before we determine the connection type.  Might need to wait 
-            // prior to doing any api requests as well.
-            setTimeout(() => {
-                if (this.network.type === 'wifi') {
-                    console.log('we got a wifi connection, woohoo!');
-                }
-            }, 3000);
+    delete_by_id(id) {
+        var page = this;
+        page.row_data = [];
+        this.database.transaction(function (tx) {
+            tx.executeSql('DELETE FROM people WHERE ID = ?', [id], function (tx, rs) {
+                console.log('Data is deleted ');
+
+                page.retrieve();
+
+            }, function (tx, error) {
+                console.log('SELECT error: ' + error.message);
+            });
         });
+    }
+
+    public try_upload() {
+
+        var page = this;
+        this.interval = setInterval(function () {
+            var networkState = page.network.type;
+            page.networkType = networkState;
+            if (networkState !== Connection.NONE) {
+                page.isOnline = true;
+                page.upload();
+            } else {
+                page.isOnline = false;
+            }
+        }, 1000)
+
     }
 
 
