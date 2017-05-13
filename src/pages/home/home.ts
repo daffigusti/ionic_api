@@ -17,7 +17,10 @@ import {NativeStorage} from "@ionic-native/native-storage";
 import {Network} from "@ionic-native/network";
 import {SQLite, SQLiteObject} from '@ionic-native/sqlite';
 
+
 declare var cordova: any;
+declare var navigator: any;
+declare var Connection: any;
 
 @Component({
     selector: 'page-home',
@@ -32,6 +35,8 @@ export class HomePage {
     public database: SQLiteObject;
     people = {firstname: '', lastname: '', image: ''};
     public row_data: any;
+    isOnline = false;
+    networkType = "";
 
     constructor(public navCtrl: NavController,
                 private camera: Camera,
@@ -60,6 +65,19 @@ export class HomePage {
                 this.retrieve();
             })
             .catch(e => console.log(e));
+
+
+        var page = this;
+        setInterval(function () {
+            var networkState = network.type;
+            page.networkType = networkState;
+            if (networkState !== Connection.NONE) {
+                page.isOnline = true;
+            } else {
+                page.isOnline = false;
+            }
+        }, 1000)
+
     }
 
     ionViewDidLoad() {

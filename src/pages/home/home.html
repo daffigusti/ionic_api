@@ -7,6 +7,23 @@
 </ion-header>
 
 <ion-content padding>
+
+  <div class="card">
+    <div class="item item-text-wrap">
+      <h1>Network: {{networkType}}</h1>
+    </div>
+  </div>
+
+
+  <div class="card">
+    <div class="item item-text-wrap">
+      <ion-toggle [(ngModel)]="isOnline" >
+        <h1 [hidden]="!isOnline">I'm online</h1>
+        <h1 [hidden]="isOnline">I'm offline</h1>
+      </ion-toggle>
+    </div>
+  </div>
+
   <ion-list>
 
     <ion-item>
@@ -45,7 +62,7 @@
   <ion-toolbar color="primary">
     <ion-buttons>
 
-      <button ion-button icon-left (click)="uploadImage()" [disabled]="lastImage === null">
+      <button ion-button icon-left (click)="try_upload()" [disabled]="row_data.length == 0">
         <ion-icon name="cloud-upload"></ion-icon>Upload
       </button>
     </ion-buttons>
