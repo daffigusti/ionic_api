@@ -94,6 +94,7 @@ export class HomePage {
 
     public clear() {
         var page = this;
+        page.row_data = [];
         this.database.transaction(function (tx) {
             tx.executeSql('DELETE FROM people', [], function (tx, rs) {
                 console.log('Data is deleted ');
