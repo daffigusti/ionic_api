@@ -16,7 +16,7 @@
 
     <ion-item>
       <ion-label fixed>Lastname</ion-label>
-      <ion-input type="password" [(ngModel)]="people.lastname"></ion-input>
+      <ion-input type="text" [(ngModel)]="people.lastname"></ion-input>
     </ion-item>
 
   </ion-list>
@@ -27,8 +27,18 @@
     <button ion-button icon-left block (click)="presentActionSheet()">
       <ion-icon name="camera"></ion-icon>Select Image
     </button>
-    <button ion-button color="primary" block>Add</button>
+    <button ion-button color="primary" block (click)="add()" [disabled]="lastImage === null">Add</button>
+    <button ion-button color="primary" block (click)="clear()" >Clear DB</button>
   </div>
+
+  <ion-list>
+    <ion-item *ngFor="let item of row_data">
+      <ion-avatar item-left>
+        <img src="{{pathForImage(item.image)}}">
+      </ion-avatar>
+      <h2>{{item.firstname}} {{item.lastname}}</h2>
+    </ion-item>
+  </ion-list>
 </ion-content>
 
 <ion-footer>

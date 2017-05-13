@@ -6,7 +6,7 @@ import {
     ToastController,
     Platform,
     LoadingController,
-    Loading
+    Loading, AlertController
 } from 'ionic-angular';
 
 import {File} from '@ionic-native/file';
@@ -30,7 +30,8 @@ export class HomePage {
     data: any;
     db: any;
     public database: SQLiteObject;
-    people = {firstname : '',lastname:'',image:''};
+    people = {firstname: '', lastname: '', image: ''};
+    public row_data: any;
 
     constructor(public navCtrl: NavController,
                 private camera: Camera,
@@ -44,13 +45,18 @@ export class HomePage {
                 private nativeStorage: NativeStorage,
                 private network: Network,
                 private sqlite: SQLite,
-    ) {
+                public alertCtrl: AlertController,) {
+
+        this.row_data = [];
+
         this.sqlite.create({
             name: 'data.db',
             location: 'default'
         })
             .then((db: SQLiteObject) => {
                 this.database = db;
+
+                this.retrieve();
             })
             .catch(e => console.log(e));
     }
@@ -59,11 +65,62 @@ export class HomePage {
 
     }
 
-    public add(firstname,lastname,image) {
-        this.database.executeSql("INSERT INTO people (firstname, lastname, image) VALUES (firstname,lastname,image)", []).then((data) => {
+    showAlert(title, message) {
+        var alert = this.alertCtrl.create({
+            title: title,
+            subTitle: message,
+            buttons: ['OK']
+        });
+        alert.present();
+    }
+
+    public add() {
+        var page = this;
+        var sql = "INSERT INTO people (firstname, lastname, image) VALUES (" + this.people.firstname + "," + this.people.lastname + "," + this.lastImage + ")";
+        console.log(sql);
+        this.database.executeSql("INSERT INTO people (firstname, lastname, image) VALUES ('" + this.people.firstname + "','" + this.people.lastname + "','" + this.lastImage + "')", []).then((data) => {
             console.log("INSERTED: " + JSON.stringify(data));
+            this.showAlert("Sukses", "Data sudah ditambahkan");
+            this.people.firstname = '';
+            this.people.lastname = '';
+            this.lastImage = null;
+            page.retrieve();
         }, (error) => {
+            console.log(error);
             console.log("ERROR: " + JSON.stringify(error.err));
+        });
+    }
+
+    public clear() {
+        var page = this;
+        this.database.transaction(function (tx) {
+            tx.executeSql('DELETE FROM people', [], function (tx, rs) {
+                console.log('Data is deleted ');
+                page.retrieve();
+            }, function (tx, error) {
+                console.log('SELECT error: ' + error.message);
+            });
+        });
+    }
+
+    public retrieve() {
+        var page = this;
+        this.database.transaction(function (tx) {
+            tx.executeSql('SELECT * FROM people', [], function (tx, rs) {
+                //console.log('Record count ' + rs.rows.item(0).firstname);
+                console.log("Data: " + JSON.stringify(rs.rows.item));
+                for (var x = 0; x < rs.rows.length; x++) {
+                    page.row_data.push(
+                        {
+                            firstname: rs.rows.item(x).firstname,
+                            lastname: rs.rows.item(x).lastname,
+                            image: rs.rows.item(x).image,
+                        }
+                    );
+                }
+            }, function (tx, error) {
+                console.log('SELECT error: ' + error.message);
+            });
         });
     }
 
@@ -95,10 +152,11 @@ export class HomePage {
     public takePicture(sourceType) {
         // Create options for the Camera Dialog
         var options = {
-            quality: 100,
+            quality: 50,
             sourceType: sourceType,
             saveToPhotoAlbum: false,
-            correctOrientation: true
+            correctOrientation: true,
+            encodingType: 0
         };
 
         // Get the data of an image
